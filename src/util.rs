@@ -1,0 +1,1 @@
+pub const GRAVITY_CONSTANT: f64 = 6.6743e-11;
