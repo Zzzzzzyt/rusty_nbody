@@ -1,0 +1,9 @@
+{
+  "rust-analyzer.cargo.cfgs": [
+    "miri",
+    "debug_assertions",
+    "target_feature=avx",
+    "target_feature=avx2",
+    "target_feature=fma",
+  ]
+}

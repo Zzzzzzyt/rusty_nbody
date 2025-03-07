@@ -1,8 +1,9 @@
 [build]
 rustflags = [
     # "-Copt-level=3",
-    "-Ctarget-feature=+sse,+sse2,+avx,+avx2,+fma",
+    "-Ctarget-feature=+avx,+avx2,+fma",
     "-Ctarget-cpu=native",
-    "--emit",
-    "asm",
+    # "-Cllvm-args=-x86-asm-syntax=intel",
+    # "--emit",
+    # "asm",
 ]
