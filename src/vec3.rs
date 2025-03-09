@@ -59,7 +59,6 @@ impl Vec3 {
 
 impl From<Vec3> for [f64; 3] {
     #[cfg(target_feature = "avx2")]
-    #[must_use]
     #[inline]
     fn from(value: Vec3) -> Self {
         let arr = value.to_array();
@@ -67,7 +66,6 @@ impl From<Vec3> for [f64; 3] {
     }
 
     #[cfg(not(target_feature = "avx2"))]
-    #[must_use]
     #[inline]
     fn from(value: Vec3) -> Self {
         [value.x, value.y, value.z]
@@ -97,7 +95,6 @@ impl Vec3 {
 #[cfg(target_feature = "avx2")]
 impl Default for Vec3 {
     #[inline]
-    #[must_use]
     fn default() -> Self {
         Vec3 {
             avx: unsafe { _mm256_setzero_pd() },
@@ -108,7 +105,6 @@ impl Default for Vec3 {
 #[cfg(target_feature = "avx2")]
 impl PartialEq for Vec3 {
     #[inline]
-    #[must_use]
     fn eq(&self, other: &Self) -> bool {
         unsafe {
             let cmp1 = _mm256_cmp_pd(self.avx, other.avx, _CMP_EQ_OQ);
@@ -149,7 +145,6 @@ impl Add for Vec3 {
 
     #[cfg(target_feature = "avx2")]
     #[inline]
-    #[must_use]
     fn add(self, rhs: Self) -> Self {
         unsafe {
             Vec3 {
@@ -160,7 +155,6 @@ impl Add for Vec3 {
 
     #[cfg(not(target_feature = "avx2"))]
     #[inline]
-    #[must_use]
     fn add(self, rhs: Self) -> Self {
         Vec3 {
             x: self.x + rhs.x,
@@ -175,7 +169,6 @@ impl Sub for Vec3 {
 
     #[cfg(target_feature = "avx2")]
     #[inline]
-    #[must_use]
     fn sub(self, rhs: Self) -> Self {
         unsafe {
             Vec3 {
@@ -186,7 +179,6 @@ impl Sub for Vec3 {
 
     #[cfg(not(target_feature = "avx2"))]
     #[inline]
-    #[must_use]
     fn sub(self, rhs: Self) -> Self {
         Vec3 {
             x: self.x - rhs.x,
@@ -201,7 +193,6 @@ impl Mul<f64> for Vec3 {
 
     #[cfg(target_feature = "avx2")]
     #[inline]
-    #[must_use]
     fn mul(self, rhs: f64) -> Self {
         unsafe {
             let scalar = _mm256_set1_pd(rhs);
@@ -213,7 +204,6 @@ impl Mul<f64> for Vec3 {
 
     #[cfg(not(target_feature = "avx2"))]
     #[inline]
-    #[must_use]
     fn mul(self, rhs: f64) -> Self {
         Vec3 {
             x: self.x * rhs,
@@ -235,7 +225,6 @@ impl Mul for Vec3 {
 
     #[cfg(target_feature = "avx2")]
     #[inline]
-    #[must_use]
     fn mul(self, rhs: Self) -> Self {
         unsafe {
             Vec3 {
@@ -246,7 +235,6 @@ impl Mul for Vec3 {
 
     #[cfg(not(target_feature = "avx2"))]
     #[inline]
-    #[must_use]
     fn mul(self, rhs: Self) -> Self {
         Vec3 {
             x: self.x * rhs.x,
@@ -261,7 +249,6 @@ impl Div<f64> for Vec3 {
 
     #[cfg(target_feature = "avx2")]
     #[inline]
-    #[must_use]
     fn div(self, rhs: f64) -> Self {
         unsafe {
             let scalar = _mm256_set1_pd(rhs);
@@ -273,7 +260,6 @@ impl Div<f64> for Vec3 {
 
     #[cfg(not(target_feature = "avx2"))]
     #[inline]
-    #[must_use]
     fn div(self, rhs: f64) -> Self {
         Vec3 {
             x: self.x / rhs,
@@ -288,7 +274,6 @@ impl Div for Vec3 {
 
     #[cfg(target_feature = "avx2")]
     #[inline]
-    #[must_use]
     fn div(self, rhs: Self) -> Self {
         unsafe {
             Vec3 {
@@ -299,7 +284,6 @@ impl Div for Vec3 {
 
     #[cfg(not(target_feature = "avx2"))]
     #[inline]
-    #[must_use]
     fn div(self, rhs: Self) -> Self {
         Vec3 {
             x: self.x / rhs.x,
@@ -313,7 +297,6 @@ impl Neg for Vec3 {
     type Output = Self;
 
     #[inline]
-    #[must_use]
     fn neg(self) -> Self {
         Self::ZERO - self
     }

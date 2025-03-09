@@ -1,5 +1,6 @@
 pub mod kernels;
-pub mod macros;
+mod macros;
+pub mod test;
 pub mod util;
 mod vec3;
 pub mod viewer;
@@ -9,127 +10,57 @@ use std::time::Instant;
 use kernels::three_body::*;
 pub use vec3::*;
 
-macro_rules! test_kernel {
-    ($kernel:ident, $state:expr, $ground_truth:expr, $time:expr, $batch_time:expr, $dt:expr) => {{
-        let time = $time;
-        let batch_time = $batch_time;
-        let dt = $dt;
-
-        println!("---------------------------------------------------");
-        println!("{}", stringify!($kernel));
-        println!("time = {}, batch_time = {}, dt = {}", time, batch_time, dt);
-
-        let state0 = $state.clone();
-        let mut state1 = $state.clone();
-
-        let now1 = Instant::now();
-        simulate($kernel, &mut state1, time / batch_time, batch_time / dt, dt);
-        println!("used: {}us", now1.elapsed().as_micros());
-        println!();
-
-        // state1.print_summary();
-        // println!();
-        state1.print_errors(&state0);
-        println!();
-        state1.print_deviation($ground_truth);
-        println!("---------------------------------------------------");
-        println!();
-        println!();
-    }};
-}
-
 fn main() {
+    // let p = vec![
+    //     Vec3::new(0.0, 1e10, 0.0),
+    //     Vec3::new(0.5e11, 0.0, 0.0),
+    //     Vec3::new(1e11, -1e10, 0.0),
+    // ];
+    // let v = vec![
+    //     Vec3::new(0.0, -10000.0, 0.0),
+    //     Vec3::new(0.0, 10000.0, 28000.0),
+    //     Vec3::new(0.0, 0.0, -28000.0),
+    // ];
+    // let m = vec![7e29, 7e29, 7e29];
+    // let p = vec![
+    //     Vec3::new(0.0, 0.0, 0.0),
+    //     Vec3::new(149.6e9, 0.0, 0.0),
+    //     Vec3::new(149.6e9 + 0.384e9, 0.0, 0.0),
+    // ];
+    // let v = vec![
+    //     Vec3::new(0.0, 0.0, 0.0),
+    //     Vec3::new(0.0, 0.0, 29.8e3),
+    //     Vec3::new(0.0, 0.0, 29.8e3 + 1.0e3),
+    // ];
+    // let m = vec![1.989e30, 5.972e24, 7.3477e22];
+
     let p = vec![
-        Vec3::new(0.0, 1e10, 0.0),
-        Vec3::new(0.5e11, 0.0, 0.0),
-        Vec3::new(1e11, -1e10, 0.0),
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(1e10, 0.0, 0.0),
+        Vec3::new(0.0, -1e12, 0.0),
     ];
     let v = vec![
-        Vec3::new(0.0, -10000.0, 0.0),
-        Vec3::new(0.0, 10000.0, 28000.0),
-        Vec3::new(0.0, 0.0, -28000.0),
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(0.0, 0.0, 1.5e5),
+        Vec3::new(10000.0, 0.0, 0.0),
     ];
-    let m = vec![7e29, 7e29, 7e29];
+    let m = vec![2e30, 0.0, 0.0];
     let mut state = kernels::PhysicsState { p, v, m, t: 0 };
-    state.normalize();
+    // state.normalize();
 
-    let mut ground_truth = state.clone();
-    simulate(yoshida4_relative_kernel, &mut ground_truth, 10000, 10000, 1);
+    // let mut ground_truth = state.clone();
+    // simulate(yoshida4_relative_kernel, &mut ground_truth, 10000, 10000, 1);
 
-    test_kernel!(
-        yoshida4_relative_kernel,
-        &state,
-        &ground_truth,
-        100000000,
-        100000,
-        1
-    );
-    test_kernel!(
-        yoshida4_relative_kernel,
-        &state,
-        &ground_truth,
-        100000000,
-        100000,
-        10
-    );
-    test_kernel!(
-        yoshida4_relative_kernel,
-        &state,
-        &ground_truth,
-        100000000,
-        100000,
-        100
-    );
-    test_kernel!(
-        yoshida4_relative_kernel,
-        &state,
-        &ground_truth,
-        100000000,
-        100000,
-        1000
-    );
-    test_kernel!(
-        yoshida4_relative_kernel,
-        &state,
-        &ground_truth,
-        100000000,
-        100000,
-        10000
-    );
+    // viewer::start_viewer::<Yoshida4RelativeKernel>(state, 100, 200000);
 
-    test_kernel!(yoshida4_kernel, &state, &ground_truth, 100000000, 100000, 1);
-    test_kernel!(
-        yoshida4_kernel,
+    test::test_error::<Yoshida4RelativeKernel>(&state, "analysis/yoshida4_relative.json");
+    test::test_error::<Yoshida4Kernel>(&state, "analysis/yoshida4.json");
+    test::test_error::<VelVerletRelativeKernel>(&state, "analysis/vel_verlet_relative.json");
+    test::test_error::<VelVerletKernel>(&state, "analysis/vel_verlet.json");
+    test::test_error::<SymplecticEulerRelativeKernel>(
         &state,
-        &ground_truth,
-        100000000,
-        100000,
-        10
+        "analysis/symplectic_euler_relative.json",
     );
-    test_kernel!(
-        yoshida4_kernel,
-        &state,
-        &ground_truth,
-        100000000,
-        100000,
-        100
-    );
-    test_kernel!(
-        yoshida4_kernel,
-        &state,
-        &ground_truth,
-        100000000,
-        100000,
-        1000
-    );
-    test_kernel!(
-        yoshida4_kernel,
-        &state,
-        &ground_truth,
-        100000000,
-        100000,
-        10000
-    );
-
-    // viewer::start_viewer(yoshida4_relative_kernel, state, 100, 100000);
+    test::test_error::<SymplecticEulerKernel>(&state, "analysis/symplectic_euler.json");
+    test::test_error::<RK4Kernel>(&state, "analysis/rk4.json");
 }

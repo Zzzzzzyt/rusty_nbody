@@ -3,9 +3,9 @@ use crate::Vec3;
 
 use super::*;
 
-pub struct VelVerletKernel;
+pub struct SymplecticEulerKernel;
 
-impl ThreeBodyKernel for VelVerletKernel {
+impl ThreeBodyKernel for SymplecticEulerKernel {
     fn kernel(state: ThreeBodyState, steps: u64, dt: u64) -> ThreeBodyState {
         let original_m = state.m.clone();
 
@@ -22,14 +22,10 @@ impl ThreeBodyKernel for VelVerletKernel {
         v[0] *= dtf;
         v[1] *= dtf;
         v[2] *= dtf;
-        let mut a = mul_same(&calc_a(&p, &m), &Vec3::splat(0.5));
         for _ in 0..steps {
-            p = add(&p, &v);
-            p = add(&p, &a);
-            let a2 = mul_same(&calc_a(&p, &m), &Vec3::splat(0.5));
+            let a = calc_a(&p, &m);
             v = add(&v, &a);
-            v = add(&v, &a2);
-            a = a2;
+            p = add(&p, &v);
         }
         v[0] /= dtf;
         v[1] /= dtf;
@@ -43,9 +39,9 @@ impl ThreeBodyKernel for VelVerletKernel {
     }
 }
 
-pub struct VelVerletRelativeKernel;
+pub struct SymplecticEulerRelativeKernel;
 
-impl ThreeBodyKernel for VelVerletRelativeKernel {
+impl ThreeBodyKernel for SymplecticEulerRelativeKernel {
     fn kernel(state: ThreeBodyState, steps: u64, dt: u64) -> ThreeBodyState {
         let original_m = state.m.clone();
 
@@ -63,15 +59,11 @@ impl ThreeBodyKernel for VelVerletRelativeKernel {
         let mut p = [Vec3::ZERO; 3];
         let mut v = [Vec3::ZERO; 3];
 
-        let mut a = mul_same(&calc_a(&p0, &m), &Vec3::splat(0.5));
         for _ in 0..steps {
-            p = add(&p, &v);
-            p = add(&p, &v0);
-            p = add(&p, &a);
-            let a2 = mul_same(&calc_a(&add(&p0, &p), &m), &Vec3::splat(0.5));
+            let a = calc_a(&add(&p, &p0), &m);
             v = add(&v, &a);
-            v = add(&v, &a2);
-            a = a2;
+            p = add(&p, &v0);
+            p = add(&p, &v);
         }
 
         v0 = add(&v0, &v);

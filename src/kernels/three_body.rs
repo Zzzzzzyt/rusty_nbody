@@ -3,14 +3,14 @@ use crate::*;
 use super::PhysicsState;
 
 mod rk4;
+mod symplectic_euler;
 mod vel_verlet;
 mod yoshida4;
 
 pub use rk4::*;
+pub use symplectic_euler::*;
 pub use vel_verlet::*;
 pub use yoshida4::*;
-
-pub type ThreeBodyKernelFn = fn(ThreeBodyState, u64, u64) -> ThreeBodyState;
 
 pub struct ThreeBodyState {
     pub p: [Vec3; 3],
@@ -44,18 +44,20 @@ impl From<&ThreeBodyState> for PhysicsState {
     }
 }
 
-pub fn simulate(
-    kernel: ThreeBodyKernelFn,
-    state: &mut PhysicsState,
-    batch_count: u64,
-    step_count: u64,
-    dt: u64,
-) {
-    let mut state1 = ThreeBodyState::from(&*state);
-    for _ in 0..batch_count {
-        state1 = kernel(state1, step_count, dt);
+pub trait ThreeBodyKernel {
+    #[must_use]
+    fn kernel(state: ThreeBodyState, steps: u64, dt: u64) -> ThreeBodyState;
+
+    // #[must_use]
+    // fn step_length(state: ThreeBodyState, error: f64) -> u64;
+
+    fn simulate(state: &mut PhysicsState, batch_count: u64, step_count: u64, dt: u64) {
+        let mut state1 = ThreeBodyState::from(&*state);
+        for _ in 0..batch_count {
+            state1 = Self::kernel(state1, step_count, dt);
+        }
+        *state = PhysicsState::from(&state1);
     }
-    *state = PhysicsState::from(&state1);
 }
 
 #[inline(always)]
@@ -91,6 +93,10 @@ fn sub(a: &[Vec3; 3], b: &[Vec3; 3]) -> [Vec3; 3] {
 #[allow(dead_code)]
 fn mul(a: &[Vec3; 3], b: &[Vec3; 3]) -> [Vec3; 3] {
     [a[0] * b[0], a[1] * b[1], a[2] * b[2]]
+}
+
+fn mul_same(a: &[Vec3; 3], b: &Vec3) -> [Vec3; 3] {
+    [a[0] * b, a[1] * b, a[2] * b]
 }
 
 #[inline(always)]

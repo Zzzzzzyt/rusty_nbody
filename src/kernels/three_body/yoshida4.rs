@@ -1,4 +1,5 @@
 use core::mem::transmute;
+use std::str;
 
 use super::*;
 use crate::{util, Vec3};
@@ -33,104 +34,110 @@ const C3: f64 = C2;
 // c4 = w1/2
 const C4: f64 = C1;
 
-#[inline(always)]
-pub fn yoshida4_kernel(state: ThreeBodyState, steps: u64, dt: u64) -> ThreeBodyState {
-    let dtf = dt as f64 * util::UNIT_TIME;
+pub struct Yoshida4Kernel;
 
-    let original_m = state.m.clone();
-    let m = [
-        Vec3::splat(state.m[0] * util::GRAVITY_CONSTANT),
-        Vec3::splat(state.m[1] * util::GRAVITY_CONSTANT),
-        Vec3::splat(state.m[2] * util::GRAVITY_CONSTANT),
-    ];
+impl ThreeBodyKernel for Yoshida4Kernel {
+    fn kernel(state: ThreeBodyState, steps: u64, dt: u64) -> ThreeBodyState {
+        let dtf = dt as f64 * util::UNIT_TIME;
 
-    let c1 = Vec3::splat(C1 * dtf);
-    let c2 = Vec3::splat(C2 * dtf);
-    let c3 = Vec3::splat(C3 * dtf);
-    let c4 = Vec3::splat(C4 * dtf);
+        let original_m = state.m.clone();
+        let m = [
+            Vec3::splat(state.m[0] * util::GRAVITY_CONSTANT),
+            Vec3::splat(state.m[1] * util::GRAVITY_CONSTANT),
+            Vec3::splat(state.m[2] * util::GRAVITY_CONSTANT),
+        ];
 
-    let d1 = Vec3::splat(D1 * dtf);
-    let d2 = Vec3::splat(D2 * dtf);
-    let d3 = Vec3::splat(D3 * dtf);
+        let c1 = Vec3::splat(C1 * dtf);
+        let c2 = Vec3::splat(C2 * dtf);
+        let c3 = Vec3::splat(C3 * dtf);
+        let c4 = Vec3::splat(C4 * dtf);
 
-    // println!("{} {} {} {}", c1, c2, c3, c4);
-    // println!("{} {} {}", d1, d2, d3);
+        let d1 = Vec3::splat(D1 * dtf);
+        let d2 = Vec3::splat(D2 * dtf);
+        let d3 = Vec3::splat(D3 * dtf);
 
-    let mut p = state.p;
-    let mut v = state.v;
+        // println!("{} {} {} {}", c1, c2, c3, c4);
+        // println!("{} {} {}", d1, d2, d3);
 
-    for _ in 0..steps {
-        p = advance(&p, &v, &c1);
-        let a = calc_a(&p, &m);
-        v = advance(&v, &a, &d1);
+        let mut p = state.p;
+        let mut v = state.v;
 
-        p = advance(&p, &v, &c2);
-        let a = calc_a(&p, &m);
-        v = advance(&v, &a, &d2);
+        for _ in 0..steps {
+            p = advance(&p, &v, &c1);
+            let a = calc_a(&p, &m);
+            v = advance(&v, &a, &d1);
 
-        p = advance(&p, &v, &c3);
-        let a = calc_a(&p, &m);
-        v = advance(&v, &a, &d3);
+            p = advance(&p, &v, &c2);
+            let a = calc_a(&p, &m);
+            v = advance(&v, &a, &d2);
 
-        p = advance(&p, &v, &c4);
-    }
+            p = advance(&p, &v, &c3);
+            let a = calc_a(&p, &m);
+            v = advance(&v, &a, &d3);
 
-    ThreeBodyState {
-        p: p,
-        v: v,
-        m: original_m,
-        t: state.t + steps * dt,
+            p = advance(&p, &v, &c4);
+        }
+
+        ThreeBodyState {
+            p: p,
+            v: v,
+            m: original_m,
+            t: state.t + steps * dt,
+        }
     }
 }
 
-#[inline(always)]
-pub fn yoshida4_relative_kernel(state: ThreeBodyState, steps: u64, dt: u64) -> ThreeBodyState {
-    let dtf = dt as f64 * util::UNIT_TIME;
+pub struct Yoshida4RelativeKernel;
 
-    let original_m = state.m.clone();
-    let m = [
-        Vec3::splat(state.m[0] * util::GRAVITY_CONSTANT),
-        Vec3::splat(state.m[1] * util::GRAVITY_CONSTANT),
-        Vec3::splat(state.m[2] * util::GRAVITY_CONSTANT),
-    ];
+impl ThreeBodyKernel for Yoshida4RelativeKernel {
+    fn kernel(state: ThreeBodyState, steps: u64, dt: u64) -> ThreeBodyState {
+        let dtf = dt as f64 * util::UNIT_TIME;
 
-    let c1 = Vec3::splat(C1 * dtf);
-    let c2 = Vec3::splat(C2 * dtf);
-    let c3 = Vec3::splat(C3 * dtf);
-    let c4 = Vec3::splat(C4 * dtf);
+        let original_m = state.m.clone();
+        let m = [
+            Vec3::splat(state.m[0] * util::GRAVITY_CONSTANT),
+            Vec3::splat(state.m[1] * util::GRAVITY_CONSTANT),
+            Vec3::splat(state.m[2] * util::GRAVITY_CONSTANT),
+        ];
 
-    let d1 = Vec3::splat(D1 * dtf);
-    let d2 = Vec3::splat(D2 * dtf);
-    let d3 = Vec3::splat(D3 * dtf);
+        let c1 = Vec3::splat(C1 * dtf);
+        let c2 = Vec3::splat(C2 * dtf);
+        let c3 = Vec3::splat(C3 * dtf);
+        let c4 = Vec3::splat(C4 * dtf);
 
-    // println!("{} {} {} {}", c1, c2, c3, c4);
-    // println!("{} {} {}", d1, d2, d3);
+        let d1 = Vec3::splat(D1 * dtf);
+        let d2 = Vec3::splat(D2 * dtf);
+        let d3 = Vec3::splat(D3 * dtf);
 
-    let p0 = state.p;
-    let v0 = state.v;
-    let mut p = [Vec3::ZERO; 3];
-    let mut v = [Vec3::ZERO; 3];
+        // println!("{} {} {} {}", c1, c2, c3, c4);
+        // println!("{} {} {}", d1, d2, d3);
 
-    for _ in 0..steps {
-        p = advance(&p, &add(&v0, &v), &c1);
-        let a = calc_a(&add(&p0, &p), &m);
-        v = advance(&v, &a, &d1);
+        let p0 = state.p;
+        let v0 = state.v;
+        let mut p = [Vec3::ZERO; 3];
+        let mut v = [Vec3::ZERO; 3];
 
-        p = advance(&p, &add(&v0, &v), &c2);
-        let a = calc_a(&add(&p0, &p), &m);
-        v = advance(&v, &a, &d2);
+        for _ in 0..steps {
+            p = advance(&p, &add(&v0, &v), &c1);
+            let a = calc_a(&add(&p0, &p), &m);
+            v = advance(&v, &a, &d1);
 
-        p = advance(&p, &add(&v0, &v), &c3);
-        let a = calc_a(&add(&p0, &p), &m);
-        v = advance(&v, &a, &d3);
+            p = advance(&p, &add(&v0, &v), &c2);
+            let a = calc_a(&add(&p0, &p), &m);
+            v = advance(&v, &a, &d2);
 
-        p = advance(&p, &add(&v0, &v), &c4);
-    }
+            p = advance(&p, &add(&v0, &v), &c3);
+            let a = calc_a(&add(&p0, &p), &m);
+            v = advance(&v, &a, &d3);
 
-    ThreeBodyState {
-        p: add(&p0, &p),
-        v: add(&v0, &v),
-        m: original_m,
-        t: state.t + steps * dt,
+            p = advance(&p, &add(&v0, &v), &c4);
+        }
+
+        ThreeBodyState {
+            p: add(&p0, &p),
+            v: add(&v0, &v),
+            m: original_m,
+            t: state.t + steps * dt,
+        }
     }
 }

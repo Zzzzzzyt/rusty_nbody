@@ -11,7 +11,6 @@ macro_rules! bulk_impl_op_ref_self_for {
           impl $op<&$t> for $tself {
             type Output = Self;
             #[inline]
-            #[must_use]
             fn $method(self, rhs: &$t) -> Self::Output {
               self.$method(*rhs)
             }
@@ -20,7 +19,6 @@ macro_rules! bulk_impl_op_ref_self_for {
           impl $op<$t> for &$tself {
             type Output = $tself;
             #[inline]
-            #[must_use]
             fn $method(self, rhs: $t) -> Self::Output {
               (*self).$method(rhs)
             }
@@ -29,7 +27,6 @@ macro_rules! bulk_impl_op_ref_self_for {
           impl $op<&$t> for &$tself {
             type Output = $tself;
             #[inline]
-            #[must_use]
             fn $method(self, rhs: &$t) -> Self::Output {
               (*self).$method(*rhs)
             }

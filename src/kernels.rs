@@ -97,16 +97,27 @@ impl PhysicsState {
         println!("CoM error: {:.10e}", com_diff.norm());
     }
 
-    pub fn print_deviation(&self, ground_truth: &PhysicsState) {
-        let mut p_diff = 0.0;
-        let mut v_diff = 0.0;
+    pub fn print_deviation(&self, ground_truth: &PhysicsState) -> (f64, f64, f64, f64) {
+        let mut p_std: f64 = 0.0;
+        let mut v_std: f64 = 0.0;
+        let mut p_diff_max: f64 = 0.0;
+        let mut v_diff_max: f64 = 0.0;
         for i in 0..self.p.len() {
-            p_diff += (self.p[i] - ground_truth.p[i]).norm_squared();
-            v_diff += (self.v[i] - ground_truth.v[i]).norm_squared();
+            let p_diff = (self.p[i] - ground_truth.p[i]).norm_squared();
+            let v_diff = (self.v[i] - ground_truth.v[i]).norm_squared();
+            p_diff_max = p_diff_max.max(p_diff.sqrt());
+            v_diff_max = v_diff_max.max(v_diff.sqrt());
+            p_std += p_diff;
+            v_std += v_diff;
         }
-        p_diff /= self.p.len() as f64;
-        v_diff /= self.p.len() as f64;
-        println!("Position std: {:.10e}", p_diff.sqrt());
-        println!("Velocity std: {:.10e}", v_diff.sqrt());
+        p_std /= self.p.len() as f64;
+        v_std /= self.p.len() as f64;
+        p_std = p_std.sqrt();
+        v_std = v_std.sqrt();
+        println!("Position standard deviation: {:.10e}", p_std);
+        println!("Velocity standard deviation: {:.10e}", v_std);
+        println!("Position max deviation: {:.10e}", p_diff_max);
+        println!("Velocity max deviation: {:.10e}", v_diff_max);
+        return (p_std, v_std, p_diff_max, v_diff_max);
     }
 }
